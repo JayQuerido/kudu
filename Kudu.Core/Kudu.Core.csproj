@@ -88,6 +88,9 @@
     <Compile Include="Infrastructure\OperationManager.cs" />
     <Compile Include="Infrastructure\VsHelper.cs" />
     <Compile Include="Infrastructure\XmlUtility.cs" />
+    <Compile Include="Settings\DefaultSettingsProvider.cs" />
+    <Compile Include="Settings\PerSiteSettingsProvider.cs" />
+    <Compile Include="Settings\EnvironmentSettingsProvider.cs" />
     <Compile Include="Settings\DeploymentSettingsManager.cs" />
     <Compile Include="Settings\JsonSettings.cs" />
     <Compile Include="SourceControl\Git\KnownEnvironment.cs" />

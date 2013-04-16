@@ -13,6 +13,8 @@ namespace Kudu.Core.Test
 {
     public class DeploymentSettingFacts
     {
+        private static readonly IEnumerable<ISettingsProvider> EmptySettingsProviders = new List<ISettingsProvider>();
+
         [Theory, ClassData(typeof(CommandIdleTimeoutData))]
         public void CommandIdleTimeoutTests(string value, int expected)
         {
@@ -52,7 +54,7 @@ namespace Kudu.Core.Test
             // Arrange
             var settings = new Mock<ISettings>();
             settings.Setup(s => s.GetValue("deployment", "branch")).Returns("my-branch");
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, EmptySettingsProviders);
 
             // Act
             string branch = deploymentSettings.GetBranch();
@@ -67,7 +69,7 @@ namespace Kudu.Core.Test
             // Arrange
             var settings = new Mock<ISettings>();
             settings.Setup(s => s.GetValue("deployment", "deployment_branch")).Returns("my-branch");
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, EmptySettingsProviders);
 
             // Act
             string branch = deploymentSettings.GetBranch();
@@ -86,7 +88,7 @@ namespace Kudu.Core.Test
                 { "deployment_branch", "my-deployment-branch" }
             };
             settings.Setup(s => s.GetValue("deployment", "branch")).Returns("my-branch");
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, defaultSettings);
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, BuildSettingsProviders(defaultSettings));
 
             // Act
             string branch = deploymentSettings.GetBranch();
@@ -105,7 +107,7 @@ namespace Kudu.Core.Test
                 { "deployment_branch", "my-deployment-branch" },
                 { "branch", "my-legacy-branch" }
             };
-            var deploymentSettings = new DeploymentSettingsManager(settings, defaultSettings);
+            var deploymentSettings = new DeploymentSettingsManager(settings, BuildSettingsProviders(defaultSettings));
 
             // Act
             string branch = deploymentSettings.GetBranch();
@@ -121,7 +123,7 @@ namespace Kudu.Core.Test
             var settings = new Mock<ISettings>(MockBehavior.Strict);
             settings.Setup(s => s.DeleteValue("deployment", "branch")).Returns(true).Verifiable();
             settings.Setup(s => s.SetValue("deployment", "deployment_branch", "my-branch")).Verifiable();
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, EmptySettingsProviders);
 
             // Act
             deploymentSettings.SetBranch("my-branch");
@@ -139,7 +141,7 @@ namespace Kudu.Core.Test
             // Arrange
             var settings = new Mock<ISettings>(MockBehavior.Strict);
             settings.Setup(s => s.GetValue("deployment", "SCM_USE_SHALLOW_CLONE")).Returns(value);
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, EmptySettingsProviders);
 
             // Act
             bool result = deploymentSettings.AllowShallowClones();
@@ -161,13 +163,20 @@ namespace Kudu.Core.Test
             // Arrange
             var settings = new Mock<ISettings>(MockBehavior.Strict);
             settings.Setup(s => s.GetValue("deployment", "SCM_USE_SHALLOW_CLONE")).Returns(value);
-            var deploymentSettings = new DeploymentSettingsManager(settings.Object, new Dictionary<string, string>());
+            var deploymentSettings = new DeploymentSettingsManager(settings.Object, EmptySettingsProviders);
 
             // Act
             bool result = deploymentSettings.AllowShallowClones();
 
             // Assert
             Assert.False(result);
+        }
+
+        private static ISettingsProvider[] BuildSettingsProviders(Dictionary<string, string> defaultSettings)
+        {
+            var testProvider = new TestSettingsProvider(defaultSettings);
+            var settingsProviders = new ISettingsProvider[] { testProvider };
+            return settingsProviders;
         }
 
         class CommandIdleTimeoutData : SettingsData
@@ -215,5 +224,26 @@ namespace Kudu.Core.Test
                 return GetEnumerator(); 
             }
         }
+
+        class TestSettingsProvider : ISettingsProvider
+        {
+            private Dictionary<string, string> _settings;
+
+            public TestSettingsProvider(IDictionary<string, string> settings)
+            {
+                _settings = new Dictionary<string, string>(settings, StringComparer.OrdinalIgnoreCase);
+            }
+
+            public IEnumerable<KeyValuePair<string, string>> GetValues()
+            {
+                return _settings;
+            }
+
+            public string GetValue(string key)
+            {
+                return _settings[key];
+            }
+        }
+
     }
 }
