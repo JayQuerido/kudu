@@ -16,7 +16,7 @@ namespace Kudu.Core.Settings
         {
         }
 
-        public DeploymentSettingsManager(ISettings settings, IEnumerable<ISettingsProvider> settingsProviders)
+        internal DeploymentSettingsManager(ISettings settings, IEnumerable<ISettingsProvider> settingsProviders)
         {
             _perSiteSettings = new PerSiteSettingsProvider(settings);
 

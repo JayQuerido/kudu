@@ -174,7 +174,7 @@ namespace Kudu.Core.Test
 
         private static ISettingsProvider[] BuildSettingsProviders(Dictionary<string, string> defaultSettings)
         {
-            var testProvider = new TestSettingsProvider(defaultSettings);
+            var testProvider = new BasicSettingsProvider(defaultSettings);
             var settingsProviders = new ISettingsProvider[] { testProvider };
             return settingsProviders;
         }
@@ -224,26 +224,5 @@ namespace Kudu.Core.Test
                 return GetEnumerator(); 
             }
         }
-
-        class TestSettingsProvider : ISettingsProvider
-        {
-            private Dictionary<string, string> _settings;
-
-            public TestSettingsProvider(IDictionary<string, string> settings)
-            {
-                _settings = new Dictionary<string, string>(settings, StringComparer.OrdinalIgnoreCase);
-            }
-
-            public IEnumerable<KeyValuePair<string, string>> GetValues()
-            {
-                return _settings;
-            }
-
-            public string GetValue(string key)
-            {
-                return _settings[key];
-            }
-        }
-
     }
 }

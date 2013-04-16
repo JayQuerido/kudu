@@ -6,27 +6,14 @@ using Kudu.Contracts.Settings;
 
 namespace Kudu.Core.Settings
 {
-    public class EnvironmentSettingsProvider : ISettingsProvider
+    public class EnvironmentSettingsProvider : BasicSettingsProvider
     {
         private static readonly Lazy<Dictionary<string, string>> _environmentSettingsFactory = new Lazy<Dictionary<string, string>>(GetEnvironmentSettingsInternal);
         private const string AppSettingPrefix = "APPSETTING_";
-        private readonly Dictionary<string, string> _settings;
 
         public EnvironmentSettingsProvider()
+            : base(_environmentSettingsFactory.Value)
         {
-            _settings = _environmentSettingsFactory.Value;
-        }
-
-        public IEnumerable<KeyValuePair<string, string>> GetValues()
-        {
-            return _settings;
-        }
-
-        public string GetValue(string key)
-        {
-            string value;
-            _settings.TryGetValue(key, out value);
-            return value;
         }
 
         private static Dictionary<string, string> GetEnvironmentSettingsInternal()
