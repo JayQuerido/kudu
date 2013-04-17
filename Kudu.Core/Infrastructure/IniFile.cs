@@ -15,7 +15,7 @@ namespace Kudu.Core.Infrastructure
             _path = path;
         }
 
-        public string GetSectionValue(string section, string key)
+        public IDictionary<string, string> GetSectionValues(string section)
         {
             if (!File.Exists(_path))
             {
@@ -25,14 +25,12 @@ namespace Kudu.Core.Infrastructure
             ParseIniFile();
 
             Dictionary<string, string> valueLookup;
-            string value;
-            if (_sectionLookup.TryGetValue(section, out valueLookup) &&
-                valueLookup.TryGetValue(key, out value))
+            if (_sectionLookup.TryGetValue(section, out valueLookup))
             {
-                return value;
+                return valueLookup;
             }
 
-            return null;
+            return new Dictionary<string, string>();
         }
 
         private void ParseIniFile()
@@ -98,7 +96,6 @@ namespace Kudu.Core.Infrastructure
                         currentSection[key.Trim()] = keyValue.Trim();
                     }
                 }
-
             }
         }
     }

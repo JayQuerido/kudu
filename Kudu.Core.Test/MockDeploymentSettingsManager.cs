@@ -36,5 +36,11 @@ namespace Kudu.Core.Test
         {
             _settings.Remove(key);
         }
+
+
+        public IDeploymentSettingsManager BuildPerDeploymentSettingsManager(string path)
+        {
+            return new MockDeploymentSettingsManager();
+        }
     }
 }

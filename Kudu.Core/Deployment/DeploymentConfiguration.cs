@@ -1,47 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using Kudu.Contracts.Settings;
 using Kudu.Core.Infrastructure;
+using Kudu.Core.Settings;
 
 namespace Kudu.Core.Deployment
 {
-    public class DeploymentConfiguration
+    public class DeploymentConfiguration : BasicSettingsProvider
     {
         internal const string DeployConfigFile = ".deployment";
-        private readonly IniFile _iniFile;
-        private readonly string _path;
 
         public DeploymentConfiguration(string path)
+            : base(GetValues(path))
         {
-            _path = path;
-            _iniFile = new IniFile(Path.Combine(path, DeployConfigFile));
         }
 
-        public string ProjectPath
+        private static IDictionary<string, string> GetValues(string path)
         {
-            get
+            var iniFile = new IniFile(Path.Combine(path, DeployConfigFile));
+            var values = iniFile.GetSectionValues("config");
+            if (values == null)
             {
-                string projectPath = _iniFile.GetSectionValue("config", "project");
-                if (String.IsNullOrEmpty(projectPath))
-                {
-                    return null;
-                }
-
-                return Path.GetFullPath(Path.Combine(_path, projectPath.TrimStart('/', '\\')));
+                values = new Dictionary<string, string>();
             }
-        }
-
-        public string Command
-        {
-            get
-            {
-                string command = _iniFile.GetSectionValue("config", "command");
-                if (String.IsNullOrEmpty(command))
-                {
-                    return null;
-                }
-
-                return command;
-            }
+            return values;
         }
     }
 }

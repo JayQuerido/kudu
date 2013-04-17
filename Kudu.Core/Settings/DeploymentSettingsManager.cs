@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kudu.Contracts.Settings;
+using Kudu.Core.Deployment;
 using XmlSettings;
 
 namespace Kudu.Core.Settings
 {
     public class DeploymentSettingsManager : IDeploymentSettingsManager
     {
-        private readonly IEnumerable<ISettingsProvider> _settingsProviders;
         private readonly PerSiteSettingsProvider _perSiteSettings;
+        private readonly IEnumerable<ISettingsProvider> _settingsProviders;
 
         public DeploymentSettingsManager(ISettings settings)
             : this(settings, new ISettingsProvider[] { new EnvironmentSettingsProvider(), new DefaultSettingsProvider() })
@@ -17,19 +18,28 @@ namespace Kudu.Core.Settings
         }
 
         internal DeploymentSettingsManager(ISettings settings, IEnumerable<ISettingsProvider> settingsProviders)
+            : this(new PerSiteSettingsProvider(settings), settingsProviders)
         {
-            _perSiteSettings = new PerSiteSettingsProvider(settings);
-
-            var providers = new List<ISettingsProvider>();
-            providers.Add(_perSiteSettings);
-            providers.AddRange(settingsProviders);
-            _settingsProviders = providers;
         }
 
-        public void SetValue(string key, string value)
+        private DeploymentSettingsManager(PerSiteSettingsProvider perSiteSettings, IEnumerable<ISettingsProvider> settingsProviders)
         {
-            // Note that this only applies to persisted per-site settings
-            _perSiteSettings.SetValue(key, value);
+            _perSiteSettings = perSiteSettings;
+
+            var settingsProvidersList = new List<ISettingsProvider>();
+            settingsProvidersList.Add(_perSiteSettings);
+            settingsProvidersList.AddRange(settingsProviders);
+            _settingsProviders = settingsProvidersList;
+        }
+
+        public IDeploymentSettingsManager BuildPerDeploymentSettingsManager(string path)
+        {
+            return new DeploymentSettingsManager(
+                _perSiteSettings,
+                new ISettingsProvider[]
+                {
+                    _perSiteSettings, new EnvironmentSettingsProvider(), new DeploymentConfiguration(path), new DefaultSettingsProvider()
+                });
         }
 
         public IEnumerable<KeyValuePair<string, string>> GetValues()
@@ -65,6 +75,12 @@ namespace Kudu.Core.Settings
             }
 
             return null;
+        }
+
+        public void SetValue(string key, string value)
+        {
+            // Note that this only applies to persisted per-site settings
+            _perSiteSettings.SetValue(key, value);
         }
 
         public void DeleteValue(string key)
